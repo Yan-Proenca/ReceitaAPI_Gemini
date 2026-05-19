@@ -1,0 +1,148 @@
+openapi: 3.0.0
+info:
+  title: API Gerador de Receitas Inteligente
+  description: API desenvolvida em Flask que utiliza inteligência artificial (Gemini) para gerar receitas culinárias estruturadas com base nos ingredientes fornecidos.
+  version: 1.0.0
+
+servers:
+  - url: /
+    description: Servidor Local / Desenvolvimento
+
+components:
+  schemas:
+    RequisicaoReceita:
+      type: object
+      required:
+        - ingredientes
+      properties:
+        ingredientes:
+          type: array
+          description: Lista contendo no mínimo 3 ingredientes para a geração da receita.
+          items:
+            type: string
+          example: ["ovo", "farinha de trigo", "leite", "açúcar"]
+
+    EstruturaReceita:
+      type: object
+      required:
+        - nome_da_receita
+        - porcoes
+        - tempo_de_preparo
+        - ingredientes
+        - modo_de_preparo
+      properties:
+        nome_da_receita:
+          type: string
+          description: O nome criativo da receita gerada pelo Chef IA.
+          example: "Panquecas Clássicas de Café da Manhã"
+        porcoes:
+          type: string
+          description: Quantidade estimada de porções.
+          example: "4 porções"
+        tempo_de_preparo:
+          type: string
+          description: Tempo estimado de preparo.
+          example: "20 minutos"
+        ingredientes:
+          type: array
+          description: Lista de ingredientes e suas respectivas quantidades sugeridas.
+          items:
+            type: string
+          example: ["2 ovos", "2 xícaras de farinha de trigo", "1 xícara de leite", "2 colheres de açúcar"]
+        modo_de_preparo:
+          type: array
+          description: Passo a passo sequencial para preparar a receita.
+          items:
+            type: string
+          example: ["Em um liquidificador, bata todos os ingredientes até obter uma massa homogênea.", "Aqueça uma frigideira antiaderente e coloque uma concha da massa.", "Vire quando dourar o fundo e reserve."]
+
+    RespostaSucesso:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        ingredientes_enviados:
+          type: array
+          items:
+            type: string
+          example: ["ovo", "farinha de trigo", "leite", "açúcar"]
+        dados_receita:
+          $ref: '#/components/schemas/EstruturaReceita'
+
+    RespostaErro:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "error"
+        message:
+          type: string
+          example: "Mensagem detalhada sobre o erro ocorrido."
+
+paths:
+  /:
+    get:
+      summary: Verifica o status da API
+      description: Rota pública para confirmar se o servidor e o gerador de receitas estão online.
+      responses:
+        '200':
+          description: API funcionando corretamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "API Gerador de Receitas funcionando!"
+                  version:
+                    type: string
+                    example: "1.0"
+
+  /generate:
+    post:
+      summary: Gera uma nova receita baseada em IA
+      description: Envia uma lista de ingredientes para que o modelo Gemini monte uma receita estruturada. Requer no mínimo 3 ingredientes na lista.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequisicaoReceita'
+      responses:
+        '200':
+          description: Receita gerada com sucesso pela IA.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespostaSucesso'
+        '400':
+          description: Falha na validação dos dados enviados (JSON ausente ou menos de 3 ingredientes).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespostaErro'
+              examples:
+                FaltaIngredientes:
+                  summary: Menos de 3 itens fornecidos
+                  value:
+                    status: "error"
+                    message: "Você precisa fornecer no mínimo 3 ingredientes."
+                FormatoInvalido:
+                  summary: JSON incorreto ou sem a chave necessária
+                  value:
+                    status: "error"
+                    message: "Por favor, envie uma lista de ingredientes no formato JSON."
+        '500':
+          description: Erro interno do servidor ou falha na comunicação com a API do Gemini.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespostaErro'
+              example:
+                status: "error"
+                message: "Erro ao gerar a receita: API key not valid..."
