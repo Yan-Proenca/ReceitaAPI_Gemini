@@ -5,8 +5,8 @@ info:
   version: 1.0.0
 
 servers:
-  - url: /
-    description: Servidor Local / Desenvolvimento
+  - url: https://receita-api-gemini.vercel.app/
+    description: Servidor de produção
 
 components:
   schemas:
